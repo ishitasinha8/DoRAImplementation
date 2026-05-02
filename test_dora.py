@@ -62,8 +62,8 @@ def test_output_shape():
     x     = torch.randn(B, S, IN, dtype=DTYPE)
     out   = layer(x)
     ok    = (out.shape == (B, S, OUT))
-    print(f"TEST 4 — Output shape {tuple(out.shape):<20} {PASS if ok else FAIL}")
-
+    print(f"TEST 4 — Output shape {str(tuple(out.shape)):<20} {PASS if ok else FAIL}")
+    
 test_output_shape()
 
 

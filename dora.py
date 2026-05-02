@@ -1,4 +1,3 @@
-
 import math
 from typing import Optional, List
 
@@ -112,12 +111,16 @@ class DoRALlamaMHA(nn.Module):
         attn_output = attn_output.transpose(1, 2).contiguous().view(B, S, -1)
         attn_output = self.o_proj(attn_output)
 
-        return attn_output, None, past_key_value
+        return attn_output, None
 
 
 def apply_dora_to_llama(model: LlamaForCausalLM, r: int = 16, alpha: float = 32.0):
+    rotary_emb = (
+        getattr(model.model, "rotary_emb", None) or
+        getattr(model.model.layers[0].self_attn, "rotary_emb", None) or
+        getattr(model.model.layers[0], "rotary_emb", None)
+    )
     for layer_idx, layer in enumerate(model.model.layers):
-        rotary_emb = getattr(layer.self_attn, "rotary_emb", None) or getattr(layer, "rotary_emb", None)
         dora_attn = DoRALlamaMHA(layer.self_attn, rotary_emb, r=r, alpha=alpha)
         dora_attn.layer_idx = layer_idx
         layer.self_attn = dora_attn
