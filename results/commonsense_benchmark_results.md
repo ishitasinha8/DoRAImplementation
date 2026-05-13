@@ -15,3 +15,19 @@ Performance comparison across **Llama-3.1-8B** base, **DoRA** on base, **Llama-3
 | **Macro Avg** | **50.33** | **60.86** | **72.88** | **83.03** |
 
 *Caption (from report): Performance comparison across Llama-3.1-8B base, DoRA, instruct, and instruct DoRA variants.*
+
+Performance comparison across **LoRA (paper)**, **DoRA (paper)** and **DoRA (Our Implementation)**. Values are **accuracy (%)**.
+
+| Task          | LoRA (paper) | DoRA (paper) | Our DoRA |
+| ------------- | ------------ | ------------ | -------- |
+| BoolQ         | 70.80        | 74.60        | 72.26    |
+| PIQA          | 85.20        | 89.30        | 86.94    |
+| Social IQa    | 79.90        | 79.90        | 78.15    |
+| HellaSwag     | 91.70        | 95.50        | 83.84    |
+| WinoGrande    | 84.30        | 85.60        | 82.48    |
+| ARC-Easy      | 84.20        | 90.50        | 93.39    |
+| ARC-Challenge | 71.20        | 80.40        | 83.19    |
+| OpenBookQA    | 79.00        | 85.80        | 84.00    |
+| Macro Avg     | 80.79        | 85.20        | 83.03    |
+
+*Graphed in report*
