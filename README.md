@@ -111,8 +111,3 @@ Most of the difficulty was in the evaluation and prompting pipeline rather than 
 ## 9. Acknowledgements
 
 This work was carried out as part of **Cornell CS 5782 (Spring 2026)**; thanks to the course staff and peers for feedback and for the reproducibility-focused project framing.
-
-
-## 9. Acknowledgements
-
-This work was carried out as part of **Cornell CS 4/5782 (Spring 2026)** — thanks to the course staff and peers for feedback and for the reproducibility-focused project framing.
