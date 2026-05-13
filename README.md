@@ -14,10 +14,6 @@ The original paper reports this comparison in Table 1 (eight datasets: BoolQ, PI
 
 ## 3. GitHub Contents
 
-Public clone URL: https://github.com/ishitasinha8/DoRAImplementation.git
-
-Layout on `main` (same five modules and driver notebook also kept under `DoRA/` in this workspace as a compact reference copy):
-
 ```
 DoRAImplementation/
 ├── README.md                         
