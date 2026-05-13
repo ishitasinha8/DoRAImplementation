@@ -101,12 +101,18 @@ Most of the difficulty was in the evaluation and prompting pipeline rather than 
 
 ## 8. References
 
-1. S.-Y. Liu et al., *[DoRA: Weight-Decomposed Low-Rank Adaptation](https://arxiv.org/abs/2402.09353)*, arXiv:2402.09353, 2024.
-2. E. J. Hu et al., *[LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)*, ICLR 2022.
-3. Meta AI, *[Llama 3.1 Model Card](https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md)*, 2024.
-4. Wolf et al., *[HuggingFace Transformers](https://arxiv.org/abs/1910.03771)*, EMNLP Demo 2020.
-5. HuggingFace, *[PEFT](https://github.com/huggingface/peft)* library (reference only; this repo’s core path is custom DoRA).
-6. Dataset papers: [BoolQ](https://arxiv.org/abs/1905.10044) (NAACL 2019), [PIQA](https://arxiv.org/abs/1911.11641) (AAAI 2020), [Social IQa](https://arxiv.org/abs/1904.09728) (EMNLP 2019), [HellaSwag](https://arxiv.org/abs/1905.07830) (ACL 2019), [WinoGrande](https://arxiv.org/abs/1907.10641) (AAAI 2020), [ARC](https://arxiv.org/abs/1803.05457) (arXiv:1803.05457), [OpenBookQA](https://arxiv.org/abs/1809.02789) (EMNLP 2018).
+1. Shih-Yang Liu, Chien-Yi Wang, Hongxu Yin, Pavlo Molchanov, Yu-Chiang Frank Wang, Kwang-Ting Cheng, and Min-Hung Chen. *[DoRA: Weight-Decomposed Low-Rank Adaptation](https://arxiv.org/abs/2402.09353)*. arXiv:2402.09353, 2024.
+2. Edward J. Hu, Yelong Shen, Phillip Wallis, Zeyuan Allen-Zhu, Yuanzhi Li, Shean Wang, Lu Wang, and Weizhu Chen. *[LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)*. ICLR, 2022.
+3. Meta AI. *[Llama 3.1 Model Card](https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md)*. 2024.
+4. Thomas Wolf et al. *[HuggingFace Transformers: State-of-the-Art Natural Language Processing](https://arxiv.org/abs/1910.03771)*. EMNLP: System Demonstrations, 2020.
+5. HuggingFace. *[PEFT: Parameter-Efficient Fine-Tuning Library](https://github.com/huggingface/peft)*. 2022–2024.
+6. Christopher Clark, Kenton Lee, Ming-Wei Chang, Tom Kwiatkowski, Michael Collins, and Kristina Toutanova. *[BoolQ: Exploring the Surprising Difficulty of Natural Yes/No Questions](https://arxiv.org/abs/1905.10044)*. NAACL, 2019.
+7. Yonatan Bisk et al. *[PIQA: Reasoning about Physical Commonsense in Natural Language](https://arxiv.org/abs/1911.11641)*. AAAI, 2020.
+8. Maarten Sap et al. *[Social IQa: Commonsense Reasoning about Social Interactions](https://arxiv.org/abs/1904.09728)*. EMNLP, 2019.
+9. Rowan Zellers, Ari Holtzman, Yonatan Bisk, Ali Farhadi, and Yejin Choi. *[HellaSwag: Can a Machine Really Finish Your Sentence?](https://arxiv.org/abs/1905.07830)*. ACL, 2019.
+10. Keisuke Sakaguchi, Ronan Le Bras, Chandra Bhagavatula, and Yejin Choi. *[WinoGrande: An Adversarial Winograd Schema Challenge at Scale](https://arxiv.org/abs/1907.10641)*. AAAI, 2020.
+11. Peter Clark, Isaac Cowhey, Oren Etzioni, Tushar Khot, Ashish Sabharwal, Carissa Schoenick, and Oyvind Tafjord. *[Think you have Solved Question Answering? Try ARC, the AI2 Reasoning Challenge](https://arxiv.org/abs/1803.05457)*. arXiv:1803.05457, 2018.
+12. Todor Mihaylov, Peter Clark, Tushar Khot, and Ashish Sabharwal. *[Can a Suit of Armor Conduct Electricity? A New Dataset for Open Book Question Answering](https://arxiv.org/abs/1809.02789)*. EMNLP, 2018.
 
 ## 9. Acknowledgements
 
