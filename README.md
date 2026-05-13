@@ -2,68 +2,120 @@
 
 ## 1. Introduction
 
-This repository is a **course project re-implementation** of **DoRA: Weight-Decomposed Low-Rank Adaptation** (Liu et al., 2024). The goal is to reproduce the paper’s core idea from scratch for a **Llama-style** causal LM: split each frozen pretrained weight into **magnitude** and **direction**, apply a **low-rank update to the direction**, and learn a **trainable magnitude vector**, aiming to match or beat **LoRA**-style PEFT with similar adapter parameter counts and **no extra inference cost after merging**.
+This repository is our CS 5782 course project : a from-scratch re-implementation and experimental study of a chosen PEFT paper, packaged so others can inspect the code, training flow, and evaluation we used.
 
-## 2. Chosen result
+We chose [**DoRA: Weight-Decomposed Low-Rank Adaptation**](https://arxiv.org/abs/2402.09353) (Liu et al., 2024). Its main idea is to decompose each frozen pretrained weight into magnitude and direction, apply low-rank adaptation to the direction while learning a separate magnitude vector, aiming to match or beat LoRA-style efficiency while moving closer to full fine-tuning quality, with no extra inference cost after merging adapters into the base weights.
 
-We targeted the paper’s **main commonsense reasoning comparison**: **DoRA vs. LoRA** on eight benchmarks (**BoolQ, PIQA, Social IQa, HellaSwag, WinoGrande, ARC-Easy, ARC-Challenge, OpenBookQA**), reported as accuracy in **Table 1** of the paper (LLaMA / commonsense section). That table is the central evidence that **decomposing magnitude and direction** improves adaptation versus standard LoRA under comparable efficiency.
+## 2. Chosen Result
 
-> **Figure (paper):** Table 1 — commonsense accuracies (LoRA vs DoRA across datasets).  
-> **Equation (paper):** adapted weight \(W' = m \odot \frac{W + BA}{\|W + BA\|}\) (column-wise normalization as in the paper; our code uses the same **row-wise \(\ell_2\)** convention on weight rows for `nn.Linear`).
+We targeted the paper’s primary quantitative result on commonsense reasoning - under the shared multi-task fine-tuning setup, DoRA should improve over LoRA on the same LLaMA-family while keeping trainable parameters and inference-time behavior in line with LoRA adapters. That result is the main empirical support for the paper’s claim that decoupling magnitude and directional adaptation increases learning capacity without adding inference overhead after merge.
 
-## 3. GitHub contents
+The original paper reports this comparison in Table 1 (eight datasets: BoolQ, PIQA, SIQA, HellaSwag, WinoGrande, ARC-Easy, ARC-Challenge, OpenBookQA; averaged accuracy and parameter counts across PEFT methods including LoRA and DoRA).
 
-Typical layout: **`dora.py`** (`DoRALinear`, Llama MHA integration), **`inject.py`** (adapter injection), **`train.py`** (fine-tuning loop, checkpoints), **`data.py`** (Alpaca-style prompts, response-only loss masking), **`evaluate.py`** (per-task accuracy; likelihood-based **multiple-choice** scoring preferred), plus small helpers (**`metrics_logger.py`**, **`training_checkpoint.py`**, tests). Place **commonsense JSON** data under a folder with per-task `test.json` files matching the evaluator’s expected names.
+## 3. GitHub Contents
 
-## 4. Re-implementation details
+Public clone URL: https://github.com/ishitasinha8/DoRAImplementation.git
 
-- **Approach:** Custom **`DoRALinear`** freezes base weights, trains **`lora_A` / `lora_B`** and **`magnitude`**; **`inject_dora(..., use_llama_mha=True)`** swaps Llama attention (and optionally **`mlp.up_proj` / `mlp.down_proj`**, not `gate_proj`) for DoRA-aligned modules, matching the paper’s LLaMA setup.  
-- **Models:** **`meta-llama/Llama-3.1-8B`** and **`meta-llama/Llama-3.1-8B-Instruct`** via Hugging Face `transformers`.  
-- **Data / metrics:** Same eight commonsense tasks as the paper; **accuracy** on held-out `test.json` per task. Training uses **Alpaca-style** instruction formatting and **labels masked to response tokens** (`-100` on prompt positions).  
-- **Evaluation:** Switched from brittle **greedy generation + exact match** to **`method="choice"`** in `evaluate_task`: **average log-likelihood** of each answer span, with **label normalization** (`true/false`, `option1/2`, `solution1/2`, `A`–`E`, etc.).  
-- **Challenges:** Most “failure to reproduce” traced to **eval/prompt mismatch**, not the core DoRA math; **instruction-tuned** base models aligned better with answer-format instructions than the raw base model.
+Layout on `main` (same five modules and driver notebook also kept under `DoRA/` in this workspace as a compact reference copy):
 
-## 5. Reproduction steps
-
-1. **Environment:** Python 3.10+ recommended; **CUDA GPU** strongly recommended (8B weights in **bfloat16** need roughly **24GB+** VRAM for comfortable single-GPU fine-tuning; adjust batch size / gradient accumulation if using less).  
-2. **Dependencies (example):**  
-   `pip install torch transformers accelerate safetensors tqdm numpy`  
-   (versions aligned with your CUDA build of PyTorch).  
-3. **Hugging Face:** Accept the **Llama 3.1** license on the Hub and run `huggingface-cli login` (token with read access).  
-4. **Data:** Prepare instruction JSON (fields: `instruction`, `input`, `output`, and compact `answer` where used) and per-task eval folders (e.g. `data/boolq/test.json`, …) consistent with `evaluate.TASK_FILES`.  
-5. **Train (example):** from the repo root (where `train.py` lives):
-
-```bash
-python train.py \
-  --model_name meta-llama/Llama-3.1-8B-Instruct \
-  --data_path ./data/train.json \
-  --output_dir ./checkpoints \
-  --r 16 --alpha 32 \
-  --epochs 3 --lr 2e-4 --batch_size 4 \
-  --max_length 256 \
-  --dtype bfloat16
+```
+DoRAImplementation/
+├── README.md                         
+├── code/                             # runnable code
+│   ├── DoRA_run_experiments.ipynb    # notebook driver for experiments
+│   └── src/                          # core Python modules
+│       ├── data.py                   # prompts, dataset loading, label handling
+│       ├── dora.py                   # DoRALinear and Llama MHA wiring
+│       ├── evaluate.py               # per-task accuracy / MC scoring
+│       ├── inject.py                 # swap linear layers for DoRA adapters
+│       └── train.py                  # fine-tuning loop and checkpoints
+├── data/                             # training JSON and eval splits
+│   ├── data/
+│   │   └── train.json                # combined commonsense fine-tuning split
+│   └── eval_data/                    # subfolder per benchmark task (held-out test.json)
+│       ├── ARC-Challenge/            
+│       ├── ARC-Easy/                 
+│       ├── boolq/                    
+│       ├── hellaswag/                
+│       ├── openbookqa/               
+│       ├── piqa/                     
+│       ├── social_i_qa/              
+│       └── winogrande/               
+├── poster/                           # poster 
+├── report/                           # report
+└── results/                          # tables, plots, and run logs
 ```
 
-- **Attention-only ablation:** add `--no_adapt_mlp`.  
-- **Resume:** `--resume_ckpt path/to/step_checkpoint.pt` (see script help).  
-6. **Evaluate:** Load base model + inject DoRA + load adapter weights, then call `evaluate.run_all_tasks(model, tokenizer, task_dir="./data", method="choice")` from a short script or notebook, or use your existing evaluation driver.
+## 4. Re-implementation Details
 
-## 6. Results / insights
+- **Approach**: custom `DoRALinear` on a Llama-style causal LM; frozen backbone; train LoRA + magnitude; merge for inference like LoRA.
+- **Injection**: `q_proj`, `k_proj`, `v_proj`, `up_proj`, `down_proj`; optional attention-only run without MLP adapters.
+- **Models / tools**: `meta-llama/Llama-3.1-8B` and `Llama-3.1-8B-Instruct` with Hugging Face `transformers` and PyTorch (GPU); tuned rank, LR, batch size, epochs, max length.
+- **Training data**: `commonsense_170k.json` merged commonsense split over BoolQ, PIQA, Social IQa, HellaSwag, WinoGrande, ARC-Easy, ARC-Challenge, OpenBookQA; Alpaca-style prompts; response-only loss (`-100` on prompts).
+- **Evaluation**: per-task accuracy and macro average; switched from greedy exact-match to likelihood-based multiple-choice with label normalization across datasets.
+- **Challenges vs paper**: brittle scores were mostly eval/prompt issues; instruct helped formatting; Llama 3.1 + our scorer means absolute numbers differ from the paper even when DoRA-over-base trends match.
 
-Qualitatively we match the paper’s headline pattern: **DoRA improves over the same base model without DoRA** on the commonsense suite, with **macro-average** gains on the order of **~10 accuracy points** for both **base** and **Instruct** Llama-3.1-8B in our runs. **Absolute** numbers differ from the paper’s LoRA/DoRA table due to **model generation (3.1 vs paper LLaMA)**, **prompting**, and **likelihood-based eval**; **Instruct + DoRA** was closest to the paper’s reference on several tasks. Expect stable, interpretable **per-dataset accuracies** once **choice scoring** and **label normalization** are used—not reliable scores from unconstrained greedy decoding.
+## 5. Reproduction Steps
+
+- Open `code/DoRA_run_experiments.ipynb` in Google Colab (upload from GitHub or `File > Open notebook > GitHub`) and select a GPU runtime (`Runtime > Change runtime type > GPU`, ideally A100 / L4 high-RAM).
+- Accept the Llama 3.1 license on Hugging Face, then authenticate in the notebook so `meta-llama/Llama-3.1-8B` / `Llama-3.1-8B-Instruct` can be downloaded.
+- Set `ROOT_DIR` to Drive mount and get the code and data into the runtime from `%cd DoRAImplementation/code/src` point paths there. Training data goes at `{ROOT_DIR}/data/train.json`; per-task eval files at `{ROOT_DIR}/eval_data/<task>/test.json`.
+- Run the training cells in the notebook (they call `inject_dora` + the `train.py` loop with defaults `--r 32 --alpha 64 --epochs 3 --lr 1e-5 --batch_size 16 --max_length 256 --dtype bfloat16`). Save adapter checkpoints to Drive so they survive disconnects.
+- Run the evaluation cells next: they load the base model, inject DoRA the same way, load the adapter weights, and call `run_all_tasks` over evaluation data to print per-task accuracy and the macro average.
+- Compute: a single Colab GPU with enough VRAM for 8B weights in `bfloat16` (A100 40 or 80 GB is comfortable; on L4 24GB / T4 16 GB reduce `batch_size` and raise `grad_accum_steps` in the notebook’s training config).
+
+## 6. Results / Insights
+
+Per-task accuracy (%) on the eight commonsense benchmarks, base vs DoRA for both Llama-3.1-8B and Llama-3.1-8B-Instruct:
+
+| Task          | Llama-3.1-8B | + DoRA | Llama-3.1-8B-Instruct | + DoRA |
+| ------------- | ------------ | ------ | --------------------- | ------ |
+| BoolQ         | 44.37        | 51.83  | 56.15                 | 72.26  |
+| PIQA          | 66.76        | 74.91  | 81.94                 | 86.94  |
+| Social IQa    | 42.22        | 56.42  | 68.63                 | 78.15  |
+| HellaSwag     | 28.73        | 45.78  | 69.00                 | 83.84  |
+| WinoGrande    | 52.25        | 58.34  | 60.69                 | 82.48  |
+| ARC-Easy      | 69.61        | 78.65  | 92.21                 | 93.39  |
+| ARC-Challenge | 53.50        | 63.82  | 78.84                 | 83.19  |
+| OpenBookQA    | 45.20        | 57.13  | 75.60                 | 84.00  |
+| Macro Avg     | 50.33        | 60.86  | 72.88                 | 83.03  |
+
+- **Headline trend matches the paper**: DoRA improves every base model on every task; macro average climbs +10.53 on Llama-3.1-8B and +10.15 on Llama-3.1-8B-Instruct.
+- **Biggest gains on harder / format-sensitive tasks**: HellaSwag (+17.0 base / +14.8 instruct), Social IQa (+14.2 / +9.5), WinoGrande on instruct (+21.8).
+
+Three-way comparison against the paper’s LLaMA3-8B numbers (LoRA and DoRA from the paper’s Table 1) and our Llama-3.1-8B-Instruct + DoRA run:
+
+| Task          | LoRA (paper) | DoRA (paper) | Our DoRA |
+| ------------- | ------------ | ------------ | -------- |
+| BoolQ         | 70.80        | 74.60        | 72.26    |
+| PIQA          | 85.20        | 89.30        | 86.94    |
+| Social IQa    | 79.90        | 79.90        | 78.15    |
+| HellaSwag     | 91.70        | 95.50        | 83.84    |
+| WinoGrande    | 84.30        | 85.60        | 82.48    |
+| ARC-Easy      | 84.20        | 90.50        | 93.39    |
+| ARC-Challenge | 71.20        | 80.40        | 83.19    |
+| OpenBookQA    | 79.00        | 85.80        | 84.00    |
+| Macro Avg     | 80.79        | 85.20        | 83.03    |
 
 ## 7. Conclusion
 
-DoRA’s idea is compact, but **end-to-end reproducibility** depends heavily on **where adapters are injected**, **training prompts vs. eval prompts**, and **how multiple-choice tasks are scored**. The main lesson: **verify the evaluation pipeline first** when PEFT results look broken.
+Our from-scratch DoRA implementation improved every base model on the eight commonsense tasks for both Llama-3.1-8B and Llama-3.1-8B-Instruct, and reached numbers close to the paper’s LoRA reference on the Instruct backbone.
+
+Most of the difficulty was in the evaluation and prompting pipeline rather than the DoRA module itself; with more time we would add a matched LoRA baseline, run rank / learning-rate / target-module ablations, and compare against the PEFT library’s DoRA.
 
 ## 8. References
 
-1. S.-Y. Liu et al., *DoRA: Weight-Decomposed Low-Rank Adaptation*, arXiv:2402.09353, 2024.  
-2. E. J. Hu et al., *LoRA: Low-Rank Adaptation of Large Language Models*, ICLR 2022.  
-3. Meta AI, *Llama 3.1 Model Card*, 2024.  
-4. Wolf et al., *HuggingFace Transformers*, EMNLP Demo 2020.  
-5. HuggingFace, *PEFT* library (reference only; this repo’s core path is custom DoRA).  
-6. Dataset papers: BoolQ (NAACL 2019), PIQA (AAAI 2020), Social IQa (EMNLP 2019), HellaSwag (ACL 2019), WinoGrande (AAAI 2020), ARC (arXiv:1803.05457), OpenBookQA (EMNLP 2018).
+1. S.-Y. Liu et al., *[DoRA: Weight-Decomposed Low-Rank Adaptation](https://arxiv.org/abs/2402.09353)*, arXiv:2402.09353, 2024.
+2. E. J. Hu et al., *[LoRA: Low-Rank Adaptation of Large Language Models](https://arxiv.org/abs/2106.09685)*, ICLR 2022.
+3. Meta AI, *[Llama 3.1 Model Card](https://github.com/meta-llama/llama-models/blob/main/models/llama3_1/MODEL_CARD.md)*, 2024.
+4. Wolf et al., *[HuggingFace Transformers](https://arxiv.org/abs/1910.03771)*, EMNLP Demo 2020.
+5. HuggingFace, *[PEFT](https://github.com/huggingface/peft)* library (reference only; this repo’s core path is custom DoRA).
+6. Dataset papers: [BoolQ](https://arxiv.org/abs/1905.10044) (NAACL 2019), [PIQA](https://arxiv.org/abs/1911.11641) (AAAI 2020), [Social IQa](https://arxiv.org/abs/1904.09728) (EMNLP 2019), [HellaSwag](https://arxiv.org/abs/1905.07830) (ACL 2019), [WinoGrande](https://arxiv.org/abs/1907.10641) (AAAI 2020), [ARC](https://arxiv.org/abs/1803.05457) (arXiv:1803.05457), [OpenBookQA](https://arxiv.org/abs/1809.02789) (EMNLP 2018).
+
+## 9. Acknowledgements
+
+This work was carried out as part of **Cornell CS 5782 (Spring 2026)**; thanks to the course staff and peers for feedback and for the reproducibility-focused project framing.
+
 
 ## 9. Acknowledgements
 
